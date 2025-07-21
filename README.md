@@ -3,6 +3,8 @@
 ## Overview
 This repository contains a comprehensive exploratory data analysis (EDA) on data science salaries across different regions, experience levels, company sizes, and job roles. The analysis aims to uncover patterns, trends, and insights that can help professionals, hiring managers, and aspiring data scientists understand the current state of compensation in the data science field.
 
+[Streamlit Cloud Website](https://eda-on-data-science-salaries.streamlit.app/)
+
 ## Dataset
 The analysis is performed on a dataset containing salary information for various data science roles, including:
 - Job titles (Data Scientist, Data Analyst, ML Engineer, etc.)
