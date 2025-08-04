@@ -13,87 +13,166 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Enhanced Custom CSS styling with additional elements for footer and improved consistency
+# Enhanced Custom CSS styling with theme-aware design for both light and dark modes
 st.markdown("""
 <style>
+    /* CSS Custom Properties for Theme Variables */
+    :root {
+        --primary-color: #1e3a8a;
+        --primary-light: #3b82f6;
+        --secondary-color: #0083B8;
+        --accent-color: #00B0B9;
+        --success-color: #10b981;
+        --warning-color: #f59e0b;
+        --error-color: #ef4444;
+        
+        /* Light theme colors */
+        --bg-primary: #ffffff;
+        --bg-secondary: #f8f9fa;
+        --bg-tertiary: #f1f5f9;
+        --text-primary: #374151;
+        --text-secondary: #4b5563;
+        --text-muted: #6b7280;
+        --border-color: #e5e7eb;
+        --shadow-light: rgba(0, 0, 0, 0.05);
+        --shadow-medium: rgba(0, 0, 0, 0.1);
+        --shadow-strong: rgba(0, 0, 0, 0.08);
+    }
+    
+    /* Dark theme colors */
+    [data-theme="dark"] {
+        --primary-color: #60a5fa;
+        --primary-light: #93c5fd;
+        --secondary-color: #38bdf8;
+        --accent-color: #06b6d4;
+        --success-color: #34d399;
+        --warning-color: #fbbf24;
+        --error-color: #f87171;
+        
+        --bg-primary: #1f2937;
+        --bg-secondary: #111827;
+        --bg-tertiary: #374151;
+        --text-primary: #f9fafb;
+        --text-secondary: #e5e7eb;
+        --text-muted: #9ca3af;
+        --border-color: #4b5563;
+        --shadow-light: rgba(0, 0, 0, 0.3);
+        --shadow-medium: rgba(0, 0, 0, 0.4);
+        --shadow-strong: rgba(0, 0, 0, 0.5);
+    }
+    
+    /* Auto-detect system theme preference */
+    @media (prefers-color-scheme: dark) {
+        :root {
+            --primary-color: #60a5fa;
+            --primary-light: #93c5fd;
+            --secondary-color: #38bdf8;
+            --accent-color: #06b6d4;
+            --success-color: #34d399;
+            --warning-color: #fbbf24;
+            --error-color: #f87171;
+            
+            --bg-primary: #1f2937;
+            --bg-secondary: #111827;
+            --bg-tertiary: #374151;
+            --text-primary: #f9fafb;
+            --text-secondary: #e5e7eb;
+            --text-muted: #9ca3af;
+            --border-color: #4b5563;
+            --shadow-light: rgba(0, 0, 0, 0.3);
+            --shadow-medium: rgba(0, 0, 0, 0.4);
+            --shadow-strong: rgba(0, 0, 0, 0.5);
+        }
+    }
+    
     /* Global styles */
     body {
         font-family: 'Arial', sans-serif;
-        color: #374151;
-        background-color: #F9FAFB;
+        color: var(--text-primary);
+        background-color: var(--bg-secondary);
+        transition: background-color 0.3s ease, color 0.3s ease;
     }
     
     .stApp {
-        background-color: #f8f9fa;
+        background-color: var(--bg-secondary);
+        transition: background-color 0.3s ease;
     }
     
     /* Header styles */
     .main-header {
         font-size: 2.8rem;
-        color: #1e3a8a;
+        color: var(--primary-color);
         text-align: center;
         margin-bottom: 1.5rem;
         font-weight: 800;
         display: block;
         letter-spacing: -0.5px;
-        text-shadow: 1px 1px 2px rgba(0,0,0,0.05);
+        text-shadow: 1px 1px 2px var(--shadow-light);
+        transition: color 0.3s ease;
     }
     
     .sub-header {
         font-size: 1.6rem;
-        color: #1e3a8a;
+        color: var(--primary-color);
         margin-top: 2.2rem;
         margin-bottom: 1.2rem;
         font-weight: 700;
         display: block;
-        border-bottom: 2px solid #e5e7eb;
+        border-bottom: 2px solid var(--border-color);
         padding-bottom: 8px;
+        transition: color 0.3s ease, border-color 0.3s ease;
     }
     
     /* Container Styles */
     .insight-box {
-        background-color: #ffffff;
+        background-color: var(--bg-primary);
         border-radius: 12px;
         padding: 24px;
         margin-bottom: 24px;
         display: block;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.1);
-        border: 1px solid #e5e7eb;
+        box-shadow: 0 4px 6px var(--shadow-light), 0 1px 3px var(--shadow-medium);
+        border: 1px solid var(--border-color);
+        transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
     }
     
     .metric-container {
-        background-color: #ffffff;
+        background-color: var(--bg-primary);
         border-radius: 10px;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        box-shadow: 0 4px 12px var(--shadow-strong);
         padding: 20px;
         margin-bottom: 15px;
         display: block;
-        border-left: 4px solid #1e3a8a;
-        transition: transform 0.2s ease-in-out;
+        border-left: 4px solid var(--primary-color);
+        transition: transform 0.2s ease-in-out, background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
     }
     
     .metric-container:hover {
         transform: translateY(-3px);
+        box-shadow: 0 6px 16px var(--shadow-strong);
     }
     
     /* Text Styles */
     p, h1, h2, h3, h4, h5, h6 {
         display: block !important;
+        color: var(--text-primary);
+        transition: color 0.3s ease;
     }
     
     /* Chart Containers */
     .chart-container {
-        background-color: #ffffff;
+        background-color: var(--bg-primary);
         border-radius: 12px;
         padding: 20px;
         margin-bottom: 24px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-        border: 1px solid #e5e7eb;
+        box-shadow: 0 4px 6px var(--shadow-light);
+        border: 1px solid var(--border-color);
+        transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
     }
     
     /* Sidebar Styling */
     .css-1d391kg, .css-12oz5g7 {
-        background-color: #f1f5f9;
+        background-color: var(--bg-tertiary) !important;
+        transition: background-color 0.3s ease;
     }
     
     /* Tab Styling */
@@ -102,21 +181,23 @@ st.markdown("""
     }
     
     .stTabs [data-baseweb="tab"] {
-        background-color: #f1f5f9;
+        background-color: var(--bg-tertiary) !important;
         border-radius: 6px 6px 0 0;
         padding: 10px 16px;
-        border: 1px solid #e5e7eb;
-        border-bottom: none;
+        border: 1px solid var(--border-color) !important;
+        border-bottom: none !important;
+        color: var(--text-secondary) !important;
+        transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
     }
     
     .stTabs [aria-selected="true"] {
-        background-color: #1e3a8a !important;
+        background-color: var(--primary-color) !important;
         color: white !important;
     }
     
     /* Footer styles */
     .footer-container {
-        background-color: #F1F5F9;
+        background-color: var(--bg-tertiary);
         border-radius: 0.75rem;
         padding: 2rem;
         margin-top: 3rem;
@@ -124,23 +205,26 @@ st.markdown("""
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
         gap: 2rem;
-        border-top: 4px solid #3B82F6;
+        border-top: 4px solid var(--primary-light);
+        transition: background-color 0.3s ease, border-color 0.3s ease;
     }
     
     .footer-section h4 {
         font-size: 1.1rem;
-        color: #1E3A8A;
+        color: var(--primary-color) !important;
         margin-bottom: 1rem;
         font-weight: 600;
-        border-bottom: 1px solid #E5E7EB;
+        border-bottom: 1px solid var(--border-color);
         padding-bottom: 0.5rem;
+        transition: color 0.3s ease, border-color 0.3s ease;
     }
     
     .footer-section p, .footer-section li {
         font-size: 0.9rem;
-        color: #4B5563;
+        color: var(--text-secondary) !important;
         line-height: 1.6;
         margin-bottom: 0.5rem;
+        transition: color 0.3s ease;
     }
     
     .footer-section ul {
@@ -153,18 +237,43 @@ st.markdown("""
         text-align: center;
         margin-top: 1rem;
         padding-top: 1rem;
-        border-top: 1px solid #E5E7EB;
+        border-top: 1px solid var(--border-color);
+        transition: border-color 0.3s ease;
     }
     
     .footer-copyright p {
         font-size: 0.9rem;
-        color: #6B7280;
+        color: var(--text-muted) !important;
         margin-bottom: 0.25rem;
+        transition: color 0.3s ease;
     }
     
     .version-info {
         font-size: 0.8rem !important;
-        color: #9CA3AF !important;
+        color: var(--text-muted) !important;
+        transition: color 0.3s ease;
+    }
+    
+    /* Streamlit specific overrides for dark theme compatibility */
+    .stSelectbox > div > div {
+        background-color: var(--bg-primary) !important;
+        border-color: var(--border-color) !important;
+        color: var(--text-primary) !important;
+    }
+    
+    .stMultiSelect > div > div {
+        background-color: var(--bg-primary) !important;
+        border-color: var(--border-color) !important;
+    }
+    
+    .stTextInput > div > div > input {
+        background-color: var(--bg-primary) !important;
+        border-color: var(--border-color) !important;
+        color: var(--text-primary) !important;
+    }
+    
+    .stSlider > div > div > div {
+        color: var(--text-primary) !important;
     }
     
     /* Responsive adjustments */
@@ -182,6 +291,58 @@ st.markdown("""
         }
     }
 </style>
+
+<script>
+// Theme detection and management
+(function() {
+    // Function to apply theme
+    function applyTheme(theme) {
+        document.documentElement.setAttribute('data-theme', theme);
+        localStorage.setItem('theme-preference', theme);
+    }
+    
+    // Function to detect system theme
+    function getSystemTheme() {
+        return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    
+    // Initialize theme
+    function initTheme() {
+        const savedTheme = localStorage.getItem('theme-preference');
+        const systemTheme = getSystemTheme();
+        const theme = savedTheme || systemTheme;
+        applyTheme(theme);
+    }
+    
+    // Listen for system theme changes
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e) {
+        if (!localStorage.getItem('theme-preference')) {
+            applyTheme(e.matches ? 'dark' : 'light');
+        }
+    });
+    
+    // Initialize on load
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initTheme);
+    } else {
+        initTheme();
+    }
+    
+    // Re-apply theme when Streamlit reruns
+    const observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+            if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
+                initTheme();
+            }
+        });
+    });
+    
+    observer.observe(document.body, {
+        childList: true,
+        subtree: true
+    });
+})();
+</script>
 """, unsafe_allow_html=True)
 
 # Load data
@@ -235,24 +396,24 @@ st.markdown('<h1 class="main-header">Data Science Salary Explorer</h1>', unsafe_
 # Introduction with key insights
 st.markdown("""
 <div class="insight-box">
-    <p style="text-align: center; font-size: 1.2rem; margin-bottom: 20px; display: block; color: #1e3a8a; font-weight: 500;">
+    <p style="text-align: center; font-size: 1.2rem; margin-bottom: 20px; display: block; color: var(--primary-color); font-weight: 500;">
         Explore comprehensive salary trends in the data science field across different roles, experience levels, and global locations.
     </p>
     <div style="display: flex; justify-content: space-around; flex-wrap: wrap; margin-top: 15px;">
         <div style="text-align: center; padding: 10px; min-width: 200px;">
-            <div style="font-size: 1.8rem; font-weight: 700; color: #1e3a8a;">💼</div>
-            <p style="font-weight: 600; margin: 5px 0; display: block;">Multiple Job Roles</p>
-            <p style="font-size: 0.9rem; color: #4b5563; display: block;">Compare salaries across various data science positions</p>
+            <div style="font-size: 1.8rem; font-weight: 700; color: var(--primary-color);">💼</div>
+            <p style="font-weight: 600; margin: 5px 0; display: block; color: var(--text-primary);">Multiple Job Roles</p>
+            <p style="font-size: 0.9rem; color: var(--text-secondary); display: block;">Compare salaries across various data science positions</p>
         </div>
         <div style="text-align: center; padding: 10px; min-width: 200px;">
-            <div style="font-size: 1.8rem; font-weight: 700; color: #1e3a8a;">📈</div>
-            <p style="font-weight: 600; margin: 5px 0; display: block;">Experience Impact</p>
-            <p style="font-size: 0.9rem; color: #4b5563; display: block;">See how experience level affects compensation</p>
+            <div style="font-size: 1.8rem; font-weight: 700; color: var(--primary-color);">📈</div>
+            <p style="font-weight: 600; margin: 5px 0; display: block; color: var(--text-primary);">Experience Impact</p>
+            <p style="font-size: 0.9rem; color: var(--text-secondary); display: block;">See how experience level affects compensation</p>
         </div>
         <div style="text-align: center; padding: 10px; min-width: 200px;">
-            <div style="font-size: 1.8rem; font-weight: 700; color: #1e3a8a;">🌎</div>
-            <p style="font-weight: 600; margin: 5px 0; display: block;">Global Insights</p>
-            <p style="font-size: 0.9rem; color: #4b5563; display: block;">Discover salary variations across countries</p>
+            <div style="font-size: 1.8rem; font-weight: 700; color: var(--primary-color);">🌎</div>
+            <p style="font-weight: 600; margin: 5px 0; display: block; color: var(--text-primary);">Global Insights</p>
+            <p style="font-size: 0.9rem; color: var(--text-secondary); display: block;">Discover salary variations across countries</p>
         </div>
     </div>
 </div>
@@ -408,11 +569,11 @@ with col1:
     st.markdown(f'''
     <div class="metric-container">
         <div style="display: flex; align-items: center;">
-            <div style="font-size: 2rem; margin-right: 15px; color: #1e3a8a;">💰</div>
+            <div style="font-size: 2rem; margin-right: 15px; color: var(--primary-color);">💰</div>
             <div>
-                <p style="font-size: 0.9rem; color: #6b7280; margin-bottom: 5px; display: block;">Average Salary</p>
-                <p style="font-size: 1.5rem; font-weight: 700; color: #1e3a8a; margin: 0; display: block;">${avg_salary:,.0f}</p>
-                <p style="font-size: 0.8rem; color: #6b7280; margin-top: 5px; display: block;">Standard Deviation: ${std_salary:,.0f}</p>
+                <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 5px; display: block;">Average Salary</p>
+                <p style="font-size: 1.5rem; font-weight: 700; color: var(--primary-color); margin: 0; display: block;">${avg_salary:,.0f}</p>
+                <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 5px; display: block;">Standard Deviation: ${std_salary:,.0f}</p>
             </div>
         </div>
     </div>
@@ -422,11 +583,11 @@ with col2:
     st.markdown(f'''
     <div class="metric-container">
         <div style="display: flex; align-items: center;">
-            <div style="font-size: 2rem; margin-right: 15px; color: #1e3a8a;">📊</div>
+            <div style="font-size: 2rem; margin-right: 15px; color: var(--primary-color);">📊</div>
             <div>
-                <p style="font-size: 0.9rem; color: #6b7280; margin-bottom: 5px; display: block;">Median Salary</p>
-                <p style="font-size: 1.5rem; font-weight: 700; color: #1e3a8a; margin: 0; display: block;">${median_salary:,.0f}</p>
-                <p style="font-size: 0.8rem; color: #6b7280; margin-top: 5px; display: block;">Middle value in distribution</p>
+                <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 5px; display: block;">Median Salary</p>
+                <p style="font-size: 1.5rem; font-weight: 700; color: var(--primary-color); margin: 0; display: block;">${median_salary:,.0f}</p>
+                <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 5px; display: block;">Middle value in distribution</p>
             </div>
         </div>
     </div>
@@ -436,11 +597,11 @@ with col3:
     st.markdown(f'''
     <div class="metric-container">
         <div style="display: flex; align-items: center;">
-            <div style="font-size: 2rem; margin-right: 15px; color: #1e3a8a;">🔼</div>
+            <div style="font-size: 2rem; margin-right: 15px; color: var(--primary-color);">🔼</div>
             <div>
-                <p style="font-size: 0.9rem; color: #6b7280; margin-bottom: 5px; display: block;">Highest Salary</p>
-                <p style="font-size: 1.5rem; font-weight: 700; color: #1e3a8a; margin: 0; display: block;">${max_salary:,.0f}</p>
-                <p style="font-size: 0.8rem; color: #6b7280; margin-top: 5px; display: block;">Top earner in dataset</p>
+                <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 5px; display: block;">Highest Salary</p>
+                <p style="font-size: 1.5rem; font-weight: 700; color: var(--primary-color); margin: 0; display: block;">${max_salary:,.0f}</p>
+                <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 5px; display: block;">Top earner in dataset</p>
             </div>
         </div>
     </div>
@@ -450,11 +611,11 @@ with col4:
     st.markdown(f'''
     <div class="metric-container">
         <div style="display: flex; align-items: center;">
-            <div style="font-size: 2rem; margin-right: 15px; color: #1e3a8a;">🔽</div>
+            <div style="font-size: 2rem; margin-right: 15px; color: var(--primary-color);">🔽</div>
             <div>
-                <p style="font-size: 0.9rem; color: #6b7280; margin-bottom: 5px; display: block;">Lowest Salary</p>
-                <p style="font-size: 1.5rem; font-weight: 700; color: #1e3a8a; margin: 0; display: block;">${min_salary:,.0f}</p>
-                <p style="font-size: 0.8rem; color: #6b7280; margin-top: 5px; display: block;">Entry point in dataset</p>
+                <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 5px; display: block;">Lowest Salary</p>
+                <p style="font-size: 1.5rem; font-weight: 700; color: var(--primary-color); margin: 0; display: block;">${min_salary:,.0f}</p>
+                <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 5px; display: block;">Entry point in dataset</p>
             </div>
         </div>
     </div>
@@ -462,12 +623,12 @@ with col4:
 
 # Add salary distribution context
 st.markdown(f'''
-<div style="padding: 15px; background-color: #f1f5f9; border-radius: 8px; margin-top: 15px;">
-    <p style="font-weight: 600; margin-bottom: 8px; display: block;">Salary Distribution Insights:</p>
+<div style="padding: 15px; background-color: var(--bg-tertiary); border-radius: 8px; margin-top: 15px;">
+    <p style="font-weight: 600; margin-bottom: 8px; display: block; color: var(--text-primary);">Salary Distribution Insights:</p>
     <ul style="margin: 0; padding-left: 20px;">
-        <li style="margin-bottom: 5px; display: list-item;">Middle 50% of salaries fall between <b>${p25:,.0f}</b> and <b>${p75:,.0f}</b></li>
-        <li style="margin-bottom: 5px; display: list-item;">Interquartile Range (IQR): <b>${iqr:,.0f}</b></li>
-        <li style="display: list-item;">Salary Range Spread: <b>${max_salary-min_salary:,.0f}</b></li>
+        <li style="margin-bottom: 5px; display: list-item; color: var(--text-secondary);">Middle 50% of salaries fall between <b>${p25:,.0f}</b> and <b>${p75:,.0f}</b></li>
+        <li style="margin-bottom: 5px; display: list-item; color: var(--text-secondary);">Interquartile Range (IQR): <b>${iqr:,.0f}</b></li>
+        <li style="display: list-item; color: var(--text-secondary);">Salary Range Spread: <b>${max_salary-min_salary:,.0f}</b></li>
     </ul>
 </div>
 ''', unsafe_allow_html=True)
