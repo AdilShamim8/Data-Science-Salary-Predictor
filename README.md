@@ -202,6 +202,6 @@ If you encounter any issues or have questions:
 
 ---
 
-**Built with ❤️ using Streamlit, Scikit-learn, and modern web technologies**
+**Built using Streamlit, Scikit-learn, and modern web technologies**
 
-*Last Updated: January 2025*
+*Last Updated: August 2025*
