@@ -2,7 +2,7 @@
 
 A comprehensive, AI-powered web application that provides accurate salary predictions for data science professionals using advanced machine learning models and interactive data visualization.
 
-[Streamlit Cloud Website](https://eda-on-data-science-salaries.streamlit.app/)
+[Streamlit Cloud Website](https://data-science-salary-predictor.streamlit.app/)
 
 ##  Features
 
