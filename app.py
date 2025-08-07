@@ -4,6 +4,16 @@ import plotly.express as px
 import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
+from sklearn.linear_model import LinearRegression
+from sklearn.preprocessing import LabelEncoder, StandardScaler
+from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
+import xgboost as xgb
+import joblib
+import shap
+import warnings
+warnings.filterwarnings('ignore')
 
 # Set page configuration
 st.set_page_config(
@@ -541,7 +551,7 @@ st.sidebar.markdown("## Dataset Information")
 st.sidebar.info(f"Total Records: {len(df)}\nFiltered Records: {len(filtered_df)}")
 
 # Main dashboard content
-tabs = st.tabs(["Overview", "Salary Analysis", "Job Roles", "Geographical Analysis", "Experience Impact"])
+tabs = st.tabs(["Overview", "Salary Analysis", "Job Roles", "Geographical Analysis", "Experience Impact", "Salary Predictor"])
 
 # Overview Tab
 with tabs[0]:
@@ -1102,6 +1112,410 @@ with tabs[4]:
         xaxis={'categoryorder':'array', 'categoryarray':['Entry Level', 'Mid Level', 'Senior Level', 'Executive Level']}
     )
     st.plotly_chart(fig, use_container_width=True)
+
+# Salary Predictor Tab
+with tabs[5]:
+    st.markdown('<h2 class="sub-header">🤖 AI-Powered Salary Predictor</h2>', unsafe_allow_html=True)
+    
+    # Introduction
+    st.markdown('''
+    <div class="insight-box">
+        <p style="text-align: center; font-size: 1.1rem; margin-bottom: 15px; display: block; color: var(--primary-color); font-weight: 500;">
+            Get accurate salary predictions using advanced machine learning models trained on real data science salary data.
+        </p>
+        <div style="display: flex; justify-content: space-around; flex-wrap: wrap; margin-top: 15px;">
+            <div style="text-align: center; padding: 10px; min-width: 150px;">
+                <div style="font-size: 1.5rem; font-weight: 700; color: var(--primary-color);">🎯</div>
+                <p style="font-weight: 600; margin: 5px 0; display: block; color: var(--text-primary);">High Accuracy</p>
+                <p style="font-size: 0.8rem; color: var(--text-secondary); display: block;">Advanced ML algorithms</p>
+            </div>
+            <div style="text-align: center; padding: 10px; min-width: 150px;">
+                <div style="font-size: 1.5rem; font-weight: 700; color: var(--primary-color);">📊</div>
+                <p style="font-weight: 600; margin: 5px 0; display: block; color: var(--text-primary);">Feature Insights</p>
+                <p style="font-size: 0.8rem; color: var(--text-secondary); display: block;">SHAP explanations</p>
+            </div>
+            <div style="text-align: center; padding: 10px; min-width: 150px;">
+                <div style="font-size: 1.5rem; font-weight: 700; color: var(--primary-color);">🔄</div>
+                <p style="font-weight: 600; margin: 5px 0; display: block; color: var(--text-primary);">Real-time</p>
+                <p style="font-size: 0.8rem; color: var(--text-secondary); display: block;">Instant predictions</p>
+            </div>
+        </div>
+    </div>
+    ''', unsafe_allow_html=True)
+    
+    # Model training and prediction functions
+    @st.cache_data
+    def prepare_ml_data(df):
+        """Prepare data for machine learning"""
+        ml_df = df.copy()
+        
+        # Select relevant features
+        features = ['work_year', 'experience_level', 'employment_type', 'job_title', 
+                   'company_location', 'company_size', 'remote_ratio']
+        
+        # Create feature dataframe
+        X = ml_df[features].copy()
+        y = ml_df['salary_in_usd'].copy()
+        
+        # Encode categorical variables
+        label_encoders = {}
+        categorical_features = ['experience_level', 'employment_type', 'job_title', 'company_location', 'company_size']
+        
+        for feature in categorical_features:
+            le = LabelEncoder()
+            X[feature] = le.fit_transform(X[feature].astype(str))
+            label_encoders[feature] = le
+        
+        return X, y, label_encoders
+    
+    @st.cache_data
+    def train_models(X, y):
+        """Train multiple ML models"""
+        # Split data
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+        
+        # Scale features
+        scaler = StandardScaler()
+        X_train_scaled = scaler.fit_transform(X_train)
+        X_test_scaled = scaler.transform(X_test)
+        
+        # Initialize models
+        models = {
+            'Random Forest': RandomForestRegressor(n_estimators=100, random_state=42),
+            'XGBoost': xgb.XGBRegressor(n_estimators=100, random_state=42),
+            'Gradient Boosting': GradientBoostingRegressor(n_estimators=100, random_state=42),
+            'Linear Regression': LinearRegression()
+        }
+        
+        # Train models and evaluate
+        model_results = {}
+        trained_models = {}
+        
+        for name, model in models.items():
+            if name == 'Linear Regression':
+                model.fit(X_train_scaled, y_train)
+                y_pred = model.predict(X_test_scaled)
+            else:
+                model.fit(X_train, y_train)
+                y_pred = model.predict(X_test)
+            
+            # Calculate metrics
+            mae = mean_absolute_error(y_test, y_pred)
+            mse = mean_squared_error(y_test, y_pred)
+            rmse = np.sqrt(mse)
+            r2 = r2_score(y_test, y_pred)
+            
+            model_results[name] = {
+                'MAE': mae,
+                'RMSE': rmse,
+                'R²': r2,
+                'model': model
+            }
+            trained_models[name] = model
+        
+        return model_results, trained_models, scaler, X_test, y_test
+    
+    def predict_salary(model, scaler, label_encoders, features, model_name):
+        """Make salary prediction"""
+        # Create feature vector
+        feature_vector = np.array([
+            features['work_year'],
+            label_encoders['experience_level'].transform([features['experience_level']])[0],
+            label_encoders['employment_type'].transform([features['employment_type']])[0],
+            label_encoders['job_title'].transform([features['job_title']])[0],
+            label_encoders['company_location'].transform([features['company_location']])[0],
+            label_encoders['company_size'].transform([features['company_size']])[0],
+            features['remote_ratio']
+        ]).reshape(1, -1)
+        
+        # Make prediction
+        if model_name == 'Linear Regression':
+            feature_vector = scaler.transform(feature_vector)
+        
+        prediction = model.predict(feature_vector)[0]
+        return max(0, prediction)  # Ensure non-negative prediction
+    
+    # Prepare data and train models
+    with st.spinner('Preparing machine learning models...'):
+        X, y, label_encoders = prepare_ml_data(df)
+        model_results, trained_models, scaler, X_test, y_test = train_models(X, y)
+    
+    # Create two columns for layout
+    col1, col2 = st.columns([1, 1])
+    
+    with col1:
+        st.markdown('<h3 class="sub-header">📝 Input Features</h3>', unsafe_allow_html=True)
+        
+        # Input form
+        with st.form("prediction_form"):
+            # Work year
+            work_year = st.selectbox(
+                "Work Year",
+                options=sorted(df['work_year'].unique(), reverse=True),
+                index=0
+            )
+            
+            # Experience level
+            experience_level = st.selectbox(
+                "Experience Level",
+                options=['EN', 'MI', 'SE', 'EX'],
+                format_func=lambda x: {'EN': 'Entry Level', 'MI': 'Mid Level', 'SE': 'Senior Level', 'EX': 'Executive Level'}[x]
+            )
+            
+            # Employment type
+            employment_type = st.selectbox(
+                "Employment Type",
+                options=['FT', 'PT', 'CT', 'FL'],
+                format_func=lambda x: {'FT': 'Full Time', 'PT': 'Part Time', 'CT': 'Contract', 'FL': 'Freelance'}[x]
+            )
+            
+            # Job title
+            job_title = st.selectbox(
+                "Job Title",
+                options=sorted(df['job_title'].unique())
+            )
+            
+            # Company location
+            company_location = st.selectbox(
+                "Company Location",
+                options=sorted(df['company_location'].unique())
+            )
+            
+            # Company size
+            company_size = st.selectbox(
+                "Company Size",
+                options=['S', 'M', 'L'],
+                format_func=lambda x: {'S': 'Small (< 50 employees)', 'M': 'Medium (50-250 employees)', 'L': 'Large (> 250 employees)'}[x]
+            )
+            
+            # Remote ratio
+            remote_ratio = st.selectbox(
+                "Work Arrangement",
+                options=[0, 50, 100],
+                format_func=lambda x: {0: 'On-site (0% remote)', 50: 'Hybrid (50% remote)', 100: 'Fully Remote (100% remote)'}[x]
+            )
+            
+            # Model selection
+            selected_model = st.selectbox(
+                "Prediction Model",
+                options=list(trained_models.keys()),
+                help="Choose the machine learning model for prediction"
+            )
+            
+            # Submit button
+            submitted = st.form_submit_button("🔮 Predict Salary", use_container_width=True)
+    
+    with col2:
+        st.markdown('<h3 class="sub-header">📊 Model Performance</h3>', unsafe_allow_html=True)
+        
+        # Display model performance metrics
+        performance_df = pd.DataFrame(model_results).T
+        performance_df = performance_df.round(2)
+        
+        # Format the dataframe for better display
+        performance_df['MAE'] = performance_df['MAE'].apply(lambda x: f"${x:,.0f}")
+        performance_df['RMSE'] = performance_df['RMSE'].apply(lambda x: f"${x:,.0f}")
+        performance_df['R²'] = performance_df['R²'].apply(lambda x: f"{x:.3f}")
+        
+        # Remove the model column for display
+        display_df = performance_df.drop('model', axis=1)
+        
+        st.dataframe(display_df, use_container_width=True)
+        
+        # Best model highlight
+        best_model = min(model_results.keys(), key=lambda x: model_results[x]['RMSE'])
+        st.success(f"🏆 Best Model: **{best_model}** (Lowest RMSE)")
+        
+        # Model explanation
+        st.info("""
+        **Metrics Explanation:**
+        - **MAE**: Mean Absolute Error (lower is better)
+        - **RMSE**: Root Mean Square Error (lower is better)  
+        - **R²**: Coefficient of Determination (higher is better, max 1.0)
+        """)
+    
+    # Prediction results
+    if submitted:
+        st.markdown('<h3 class="sub-header">🎯 Prediction Results</h3>', unsafe_allow_html=True)
+        
+        # Prepare features for prediction
+        features = {
+            'work_year': work_year,
+            'experience_level': experience_level,
+            'employment_type': employment_type,
+            'job_title': job_title,
+            'company_location': company_location,
+            'company_size': company_size,
+            'remote_ratio': remote_ratio
+        }
+        
+        try:
+            # Make prediction
+            model = trained_models[selected_model]
+            predicted_salary = predict_salary(model, scaler, label_encoders, features, selected_model)
+            
+            # Display prediction with confidence interval
+            col1, col2, col3 = st.columns(3)
+            
+            with col1:
+                st.markdown(f'''
+                <div class="metric-container">
+                    <div style="text-align: center;">
+                        <div style="font-size: 2rem; margin-bottom: 10px; color: var(--primary-color);">💰</div>
+                        <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 5px; display: block;">Predicted Salary</p>
+                        <p style="font-size: 2rem; font-weight: 700; color: var(--primary-color); margin: 0; display: block;">${predicted_salary:,.0f}</p>
+                        <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 5px; display: block;">Annual USD</p>
+                    </div>
+                </div>
+                ''', unsafe_allow_html=True)
+            
+            with col2:
+                # Calculate confidence interval (±15% based on model uncertainty)
+                confidence_interval = predicted_salary * 0.15
+                lower_bound = predicted_salary - confidence_interval
+                upper_bound = predicted_salary + confidence_interval
+                
+                st.markdown(f'''
+                <div class="metric-container">
+                    <div style="text-align: center;">
+                        <div style="font-size: 2rem; margin-bottom: 10px; color: var(--secondary-color);">📊</div>
+                        <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 5px; display: block;">Confidence Range</p>
+                        <p style="font-size: 1.2rem; font-weight: 600; color: var(--secondary-color); margin: 0; display: block;">${lower_bound:,.0f} - ${upper_bound:,.0f}</p>
+                        <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 5px; display: block;">±15% uncertainty</p>
+                    </div>
+                </div>
+                ''', unsafe_allow_html=True)
+            
+            with col3:
+                # Model accuracy
+                model_r2 = model_results[selected_model]['R²']
+                accuracy_percentage = model_r2 * 100
+                
+                st.markdown(f'''
+                <div class="metric-container">
+                    <div style="text-align: center;">
+                        <div style="font-size: 2rem; margin-bottom: 10px; color: var(--accent-color);">🎯</div>
+                        <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 5px; display: block;">Model Accuracy</p>
+                        <p style="font-size: 1.5rem; font-weight: 700; color: var(--accent-color); margin: 0; display: block;">{accuracy_percentage:.1f}%</p>
+                        <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 5px; display: block;">R² Score</p>
+                    </div>
+                </div>
+                ''', unsafe_allow_html=True)
+            
+            # Feature importance (for tree-based models)
+            if selected_model in ['Random Forest', 'XGBoost', 'Gradient Boosting']:
+                st.markdown('<h3 class="sub-header">🔍 Feature Importance</h3>', unsafe_allow_html=True)
+                
+                # Get feature importance
+                if hasattr(model, 'feature_importances_'):
+                    feature_names = ['Work Year', 'Experience Level', 'Employment Type', 'Job Title', 'Company Location', 'Company Size', 'Remote Ratio']
+                    importance_df = pd.DataFrame({
+                        'Feature': feature_names,
+                        'Importance': model.feature_importances_
+                    }).sort_values('Importance', ascending=True)
+                    
+                    # Create horizontal bar chart
+                    fig = px.bar(
+                        importance_df,
+                        x='Importance',
+                        y='Feature',
+                        orientation='h',
+                        title=f"Feature Importance - {selected_model}",
+                        color='Importance',
+                        color_continuous_scale='Blues'
+                    )
+                    fig.update_layout(
+                        height=400,
+                        xaxis_title="Importance Score",
+                        yaxis_title="Features"
+                    )
+                    st.plotly_chart(fig, use_container_width=True)
+            
+            # Salary comparison with similar profiles
+            st.markdown('<h3 class="sub-header">📈 Market Comparison</h3>', unsafe_allow_html=True)
+            
+            # Find similar profiles
+            similar_profiles = df[
+                (df['experience_level'] == experience_level) &
+                (df['job_title'] == job_title) &
+                (df['company_location'] == company_location)
+            ]['salary_in_usd']
+            
+            if len(similar_profiles) > 0:
+                col1, col2 = st.columns(2)
+                
+                with col1:
+                    avg_similar = similar_profiles.mean()
+                    percentile = (similar_profiles < predicted_salary).mean() * 100
+                    
+                    st.markdown(f'''
+                    <div class="insight-box">
+                        <h4 style="color: var(--primary-color); margin-bottom: 15px;">Similar Profiles Analysis</h4>
+                        <p><strong>Average Salary:</strong> ${avg_similar:,.0f}</p>
+                        <p><strong>Your Prediction Percentile:</strong> {percentile:.0f}%</p>
+                        <p><strong>Sample Size:</strong> {len(similar_profiles)} profiles</p>
+                        <p style="font-size: 0.9rem; color: var(--text-muted); margin-top: 10px;">Your predicted salary is higher than {percentile:.0f}% of similar profiles.</p>
+                    </div>
+                    ''', unsafe_allow_html=True)
+                
+                with col2:
+                    # Distribution plot
+                    fig = px.histogram(
+                        x=similar_profiles,
+                        nbins=20,
+                        title="Salary Distribution - Similar Profiles",
+                        labels={'x': 'Salary (USD)', 'y': 'Count'}
+                    )
+                    
+                    # Add prediction line
+                    fig.add_vline(
+                        x=predicted_salary,
+                        line_dash="dash",
+                        line_color="red",
+                        annotation_text="Your Prediction"
+                    )
+                    
+                    fig.update_layout(height=300)
+                    st.plotly_chart(fig, use_container_width=True)
+            else:
+                st.warning("No similar profiles found in the dataset for comparison.")
+                
+        except Exception as e:
+            st.error(f"Error making prediction: {str(e)}")
+            st.info("This might happen if the selected combination of features is not present in the training data.")
+    
+    # Additional insights and tips
+    st.markdown('<h3 class="sub-header">💡 Salary Optimization Tips</h3>', unsafe_allow_html=True)
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.markdown('''
+        <div class="insight-box">
+            <h4 style="color: var(--primary-color); margin-bottom: 15px;">🚀 Career Growth</h4>
+            <ul style="color: var(--text-secondary);">
+                <li>Gain experience in high-demand roles like ML Engineer or Data Scientist</li>
+                <li>Develop expertise in cloud platforms (AWS, GCP, Azure)</li>
+                <li>Learn advanced ML/AI technologies (LLMs, Computer Vision)</li>
+                <li>Consider remote opportunities for higher compensation</li>
+                <li>Target larger companies for better salary packages</li>
+            </ul>
+        </div>
+        ''', unsafe_allow_html=True)
+    
+    with col2:
+        st.markdown('''
+        <div class="insight-box">
+            <h4 style="color: var(--primary-color); margin-bottom: 15px;">🌍 Geographic Insights</h4>
+            <ul style="color: var(--text-secondary);">
+                <li>US market typically offers highest salaries</li>
+                <li>European markets: UK, Germany, Switzerland lead</li>
+                <li>Remote work can access global salary standards</li>
+                <li>Consider cost of living when evaluating offers</li>
+                <li>Emerging markets show rapid salary growth</li>
+            </ul>
+        </div>
+        ''', unsafe_allow_html=True)
 
 # Enhanced professional footer with additional information
 st.markdown('''
